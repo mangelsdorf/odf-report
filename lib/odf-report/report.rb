@@ -56,7 +56,7 @@ class Report
 
     @file.create(dest)
 
-    @file.update('content.xml', 'styles.xml') do |txt|
+    @file.update('content.xml') do |txt|
 
       parse_document(txt) do |doc|
 
