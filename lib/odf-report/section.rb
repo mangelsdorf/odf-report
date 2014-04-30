@@ -1,9 +1,9 @@
 module ODFReport
 
   class Section
-    include Fields, Nested
+    include Fields, Nested, Images
 
-    attr_accessor :fields, :tables, :data, :name, :collection_field, :parent
+    attr_accessor :fields, :tables, :data, :name, :collection_field, :parent, :images, :image_names_replacements
 
     def initialize(opts)
       @name             = opts[:name]
@@ -16,6 +16,8 @@ module ODFReport
 
       @tables = []
       @sections = []
+      @images = {}
+      @image_names_replacements = {}
     end
 
     def add_field(name, data_field=nil, &block)
@@ -48,11 +50,15 @@ module ODFReport
       yield(sec)
     end
 
+    def add_image(name, path=nil, &block)
+      @images[name] = path || block
+    end
+
     def populate!(row)
       @collection = get_collection_from_item(row, @collection_field) if row
     end
 
-    def replace!(doc, row = nil)
+    def replace!(doc, row = nil, parent = nil)
 
       return unless section = find_section_node(doc)
 
@@ -71,14 +77,24 @@ module ODFReport
           t.replace!(new_section, data_item)
         end
 
+        find_image_name_matches(new_section)
+
         @sections.each do |s|
-          s.replace!(new_section, data_item)
+          s.replace!(new_section, data_item, s)
         end
 
         replace_fields!(new_section, data_item)
 
         section.before(new_section)
 
+        @images.each do |k, v|
+          if v.instance_of?(Proc)
+            image_path = v.call(data_item)
+            if node = new_section.xpath(".//draw:frame[@draw:name='#{k}']/draw:image").first
+              node.set_attribute('xlink:href', image_path)
+            end
+          end
+        end
       end
 
       section.remove
@@ -98,5 +114,3 @@ module ODFReport
   end
 
 end
-
-

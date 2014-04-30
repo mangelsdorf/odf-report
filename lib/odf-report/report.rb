@@ -3,7 +3,7 @@ module ODFReport
 class Report
   include Fields, Images
 
-  attr_accessor :fields, :tables, :images, :sections, :file, :texts
+  attr_accessor :fields, :tables, :images, :sections, :file, :texts, :image_names_replacements
 
   def initialize(template_name, &block)
 
@@ -114,7 +114,7 @@ private
 
   def replace_sections!(content)
     @sections.each do |section|
-      section.replace!(content)
+      section.replace!(content, nil, self)
     end
   end
 
