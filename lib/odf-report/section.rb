@@ -89,9 +89,16 @@ module ODFReport
 
         @images.each do |k, v|
           if v.instance_of?(Proc)
-            image_path = v.call(data_item)
+            image_data = v.call(data_item)
+            image_path = image_data.is_a?(Hash) ? image_data[:path] : image_data
+
             if node = new_section.xpath(".//draw:frame[@draw:name='#{k}']/draw:image").first
               node.set_attribute('xlink:href', image_path)
+            end
+
+            if image_data.is_a?(Hash) && (frame = new_section.xpath(".//draw:frame[@draw:name='#{k}']").first)
+              frame.set_attribute('svg:height', image_data[:height]) if image_data.has_key?(:height)
+              frame.set_attribute('svg:width', image_data[:width]) if image_data.has_key?(:width)
             end
           end
         end
